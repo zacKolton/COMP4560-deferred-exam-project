@@ -4,6 +4,18 @@ from tkinter import filedialog, messagebox
 import shutil
 import os
 
+from user_interface.UI import UI
+
+def main():
+    root = tk.TK()
+    app = App(None)
+    app_user_interface = UI(root, app)
+    app.ui = app_user_interface
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
+
 def copy_file_to_downloads(file_path, new_file_name="data.xlsx"):
     if file_path:
         downloads_path = os.path.join(os.path.expanduser('~'), 'Downloads')
