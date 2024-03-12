@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import math
 
-inCsv = pd.read_excel("../data/InputData.xlsx")
+inCsv = pd.read_excel("")
 
 inRooms = {
     "Armes 200": 100,
