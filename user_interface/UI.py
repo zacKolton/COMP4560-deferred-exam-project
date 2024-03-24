@@ -2,11 +2,13 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, Toplevel
 from PIL import Image, ImageTk
 
+from scheduler.scheduler import Scheduler
+
 class UI:
     def __init__(self, master, scheduler):
         # Initialize the main UI window
         self.root = master
-        self.scheduler = scheduler  # Reference to the scheduler object
+        self.scheduler = Scheduler()  # Reference to the scheduler object
         self._title = "Deferred Exam Scheduler"
         self._width = 700  # Width of the window
         self._height = 400  # Height of the window
@@ -29,7 +31,7 @@ class UI:
             self.root.configure(bg='gray')  # Set a default background color if the image fails to load
 
         # Create and configure the upload button
-        self.upload_button = tk.Button(self.root, text="Upload and Generate Schedule", command=self.upload_file)
+        self.upload_button = tk.Button(self.root, text="Upload Schedule Data", command=self.upload_file)
         self.upload_button.configure(
             font=('Helvetica', 12, 'bold'), 
             fg='black', 
@@ -42,6 +44,21 @@ class UI:
             pady=5
         )
         self.upload_button.place(x=self._width // 2, y=self._height // 2, anchor='center')
+
+        self.run_scheduler_button = tk.Button(self.root, text="Run Scheduler", command=self.scheduler.run)
+        self.run_scheduler_button.configure(
+            font=('Helvetica', 12, 'bold'), 
+            fg='black', 
+            bg='#0078D7', 
+            activebackground='#0053ba', 
+            activeforeground='black', 
+            bd=2, 
+            relief='raised', 
+            padx=10, 
+            pady=5
+        )
+
+        self.run_scheduler_button.place(x=500, y=200, anchor='center')
 
         # Create and configure the settings button
         self.settings_button = tk.Button(self.root, text='⚙', command=self.open_settings)
@@ -60,8 +77,8 @@ class UI:
         file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx *.xls")])
         if file_path:
             try:
-                self.scheduler.create_schedule(file_path)
-                messagebox.showinfo("Success", "The schedule has been successfully created.")
+                self.scheduler.set_input_data(file_path)
+                messagebox.showinfo("Success", "The file has been successfully created.")
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred: {e}")
 
