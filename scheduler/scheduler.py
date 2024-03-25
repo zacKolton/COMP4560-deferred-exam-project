@@ -131,14 +131,24 @@ class Scheduler:
         schedule = self.color_to_schedule(graph_color, index_name, course_dict)
 
         return schedule
+    
+    def set_input_data(self, inputData):
+        if inputData is not None and inputData != "":
+            self.in_csv = pd.read_excel(inputData)
+        else:
+            print("Invalid Data")
 
     def run(self):
-        courses_json = self.create_json_course_data("PIDM", "COURSE_IDENTIFICATION")
-        sorted_courses = dict(sorted(courses_json.items(), key=lambda item: item[1]['students'], reverse=True))
+        if self.in_csv is not None:
+            courses_json = self.create_json_course_data("PIDM", "COURSE_IDENTIFICATION")
+            sorted_courses = dict(sorted(courses_json.items(), key=lambda item: item[1]['students'], reverse=True))
 
-        gc_schedule = self.graph_coloring_schedule(sorted_courses)
-        gc_dict = self.dict_to_df_no_rooms(gc_schedule, courses_json)
-        gc_dict.to_excel('../data/Outputs/Graph Coloring.xlsx', index=False, sheet_name='Schedule')
+            gc_schedule = self.graph_coloring_schedule(sorted_courses)
+            gc_dict = self.dict_to_df_no_rooms(gc_schedule, courses_json)
+            #gc_dict.to_excel('../data/Outputs/Graph Coloring.xlsx', index=False, sheet_name='Schedule')
+            print(gc_dict)
+        else:
+            print("missing data")
 
 
 # Example usage:
