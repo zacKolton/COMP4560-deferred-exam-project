@@ -1,36 +1,39 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, Toplevel
 from PIL import Image, ImageTk
+import threading
 
+# Assume Scheduler is defined in scheduler.scheduler
 from scheduler.scheduler import Scheduler
 
 class UI:
     def __init__(self, master, scheduler):
-        # Initialize the main UI window
+        # Initialize the main UI window and set up the scheduler
         self.root = master
-        self.scheduler = Scheduler()  # Reference to the scheduler object
-        self._title = "Deferred Exam Scheduler"
-        self._width = 700  # Width of the window
-        self._height = 400  # Height of the window
+        self.scheduler = scheduler
+        self.scheduler.set_ui(self)  # Link the UI to the scheduler for callbacks
 
-        # Set the title and size of the window
+        # UI window configuration
+        self._title = "Deferred Exam Scheduler"
+        self._width = 700  # Window width
+        self._height = 400  # Window height
+
+        # Set window title and size
         self.root.title(self._title)
         self.root.geometry(f"{self._width}x{self._height}")
 
+        # Try to load and set the background image
         try:
-            # Load and resize the background image
             pil_image = Image.open("./branding/background.jpg")
             resized_image = pil_image.resize((self._width, self._height), Image.Resampling.LANCZOS)
             self.photo = ImageTk.PhotoImage(resized_image)
-
-            # Set the resized image as the background
             self.background_label = tk.Label(self.root, image=self.photo)
             self.background_label.place(x=0, y=0, relwidth=1, relheight=1)
         except Exception as e:
             print(f"Error loading the background image: {e}")
-            self.root.configure(bg='gray')  # Set a default background color if the image fails to load
+            self.root.configure(bg='gray')  # Fallback background color
 
-        # Create and configure the upload button
+        # Upload button configuration and placement
         self.upload_button = tk.Button(self.root, text="Upload Schedule Data", command=self.upload_file)
         self.upload_button.configure(
             font=('Helvetica', 12, 'bold'), 
@@ -43,9 +46,10 @@ class UI:
             padx=10, 
             pady=5
         )
-        self.upload_button.place(x=self._width // 2, y=self._height // 2, anchor='center')
+        self.upload_button.place(x=self._width // 2 - 75, y=self._height // 2, anchor='center')
 
-        self.run_scheduler_button = tk.Button(self.root, text="Run Scheduler", command=self.scheduler.run)
+        # Button to initiate the scheduling process
+        self.run_scheduler_button = tk.Button(self.root, text="Run Scheduler", command=self.run_scheduler)
         self.run_scheduler_button.configure(
             font=('Helvetica', 12, 'bold'), 
             fg='black', 
@@ -57,10 +61,14 @@ class UI:
             padx=10, 
             pady=5
         )
+        self.run_scheduler_button.place(x=self._width // 2 + 75, y=self._height // 2, anchor='center')
 
-        self.run_scheduler_button.place(x=500, y=200, anchor='center')
+        # Text widget for displaying progress and errors
+        self.progress_text = tk.Text(self.root, height=4, width=50)
+        self.progress_text.place(x=350, y=300, anchor='center')
+        self.progress_text.tag_configure('error', foreground='red')
 
-        # Create and configure the settings button
+        # Settings button with a gear icon
         self.settings_button = tk.Button(self.root, text='⚙', command=self.open_settings)
         self.settings_button.configure(
             font=('Helvetica', 14, 'bold'), 
@@ -72,39 +80,50 @@ class UI:
         )
         self.settings_button.place(relx=0.5, rely=0.95, anchor='center')
 
+    def update_progress(self, message, error=False):
+        # Insert message into the Text widget and scroll to the end
+        self.progress_text.insert(tk.END, message + "\n")
+        if error:
+            start_index = self.progress_text.index("end-1c linestart")
+            end_index = self.progress_text.index("end-1c")
+            self.progress_text.tag_add('error', start_index, end_index)
+        self.progress_text.see(tk.END)
+
     def upload_file(self):
-        # Open a file dialog to select an Excel file and create a schedule
+        # File dialog to select the Excel file for scheduling
         file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx *.xls")])
         if file_path:
             try:
                 self.scheduler.set_input_data(file_path)
-                messagebox.showinfo("Success", "The file has been successfully created.")
+                self.update_progress("Uploaded schedule")
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred: {e}")
 
+    def run_scheduler(self):
+        # Start the scheduler in a separate thread to prevent UI freezing
+        self.update_progress("Starting scheduling process...")
+        threading.Thread(target=self.scheduler.run).start()
+
     def open_settings(self):
-        # Open a new window showing the "About" information
+        # Open a new window for settings or about info
         about_window = Toplevel(self.root)
         about_window.title("About")
-        about_window.geometry("300x200")  # Size of the about window
+        about_window.geometry("300x200")
         about_text = "Upload your excel containing list of students and their courses and be able to download the deferred exam schedule for this term."
         tk.Label(about_window, text="About This App", font=('Helvetica', 12, 'bold')).pack(pady=10)
         tk.Label(about_window, text=about_text, wraplength=250).pack(pady=10)
 
     def get_title(self):
-        # Return the title of the app
         return self._title
 
     def get_width(self):
-        # Return the width of the app window
         return self._width
 
     def get_height(self):
-        # Return the height of the app window
         return self._height
 
 if __name__ == "__main__":
     root = tk.Tk()
-    scheduler = Scheduler()  # Create an instance of the Scheduler class
-    app = UI(root, scheduler)  # Create an instance of the UI class
+    scheduler = Scheduler()
+    app = UI(root, scheduler)
     root.mainloop()
