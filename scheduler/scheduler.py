@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import math
+import os
 
 class Scheduler:
     def __init__(self):
@@ -140,16 +141,25 @@ class Scheduler:
 
     def run(self):
         if self.in_csv is not None:
-            courses_json = self.create_json_course_data("PIDM", "COURSE_IDENTIFICATION")
-            sorted_courses = dict(sorted(courses_json.items(), key=lambda item: item[1]['students'], reverse=True))
+            if "PIDM" in self.in_csv.columns and "COURSE_IDENTIFICATION" in self.in_csv.columns:
+                courses_json = self.create_json_course_data("PIDM", "COURSE_IDENTIFICATION")
+                sorted_courses = dict(sorted(courses_json.items(), key=lambda item: item[1]['students'], reverse=True))
 
-            gc_schedule = self.graph_coloring_schedule(sorted_courses)
-            gc_dict = self.dict_to_df_no_rooms(gc_schedule, courses_json)
-            #gc_dict.to_excel('../data/Outputs/Graph Coloring.xlsx', index=False, sheet_name='Schedule')
-            print(gc_dict)
+                gc_schedule = self.graph_coloring_schedule(sorted_courses)
+                gc_dict = self.dict_to_df_no_rooms(gc_schedule, courses_json)
+
+                # Determine the downloads folder (or set a specific path)
+                downloads_path = os.path.join(os.path.expanduser('~'), 'Downloads')
+                output_file = os.path.join(downloads_path, 'Graph_Coloring_Schedule.xlsx')
+
+                # Save the DataFrame to an Excel file in the downloads folder
+                gc_dict.to_excel(output_file, index=False, sheet_name='Schedule')
+
+                print(f"Schedule saved to {output_file}")
+            else:
+                print("Required columns are missing in the input data.")
         else:
-            print("missing data")
-
+            print("Missing data. Please upload the data file.")
 
 # Example usage:
 # scheduler = Scheduler()
