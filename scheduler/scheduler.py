@@ -1,7 +1,9 @@
+import time
 import pandas as pd
 import numpy as np
 import math
 import os
+from datetime import datetime
 
 class Scheduler:
     def __init__(self):
@@ -160,6 +162,7 @@ class Scheduler:
         self.ui.update_progress("Extracting/processing data...\n(This may take a while)")
         if self.in_csv is not None:
             if "PIDM" in self.in_csv.columns and "COURSE_IDENTIFICATION" in self.in_csv.columns:
+                current_timestamp = int(time.time())
                 courses_json = self.create_json_course_data("PIDM", "COURSE_IDENTIFICATION")
                 sorted_courses = dict(sorted(courses_json.items(), key=lambda item: item[1]['students'], reverse=True))
 
@@ -169,7 +172,7 @@ class Scheduler:
                 gc_dict = self.dict_to_df_no_rooms(gc_schedule, courses_json)
 
                 downloads_path = os.path.join(os.path.expanduser('~'), 'Downloads')
-                output_file = os.path.join(downloads_path, 'Deferred_Exam_Schedule.xlsx')
+                output_file = os.path.join(downloads_path, f"Deferred_Exam_Schedule_{current_timestamp}.xlsx")
 
                 gc_dict.to_excel(output_file, index=False, sheet_name='Schedule')
                 self.ui.update_progress(f"Done! Downloaded at: {output_file}")
