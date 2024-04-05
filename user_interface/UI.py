@@ -122,8 +122,3 @@ class UI:
     def get_height(self):
         return self._height
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    scheduler = Scheduler()
-    app = UI(root, scheduler)
-    root.mainloop()
