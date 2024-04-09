@@ -1,3 +1,5 @@
+import json
+import re
 import time
 import pandas as pd
 import numpy as np
@@ -45,6 +47,32 @@ class Scheduler:
     def set_ui(self, ui):
         # Assigns a UI object to the scheduler for updating progress
         self.ui = ui
+
+    def remove_course_codes(self, course_header):
+        ret_data = []
+
+        for course in self.in_csv[course_header].unique():
+            course_code_removed = re.sub(r'\d', '', course)
+             
+            ret_data.append(course_code_removed)
+
+        return list(set(ret_data))
+    
+    def count_students_per_field(self, student_header, course_header):
+        ret_data = {}
+
+        for _, row in self.in_csv.iterrows():
+            pidm = row[student_header]
+            course_code = row[course_header]
+
+            field = str(re.sub(r'\d', '', course_code))
+
+            if field in ret_data:
+                ret_data[field]["student_count"] += 1
+            else:
+                ret_data[field] = {"student_count": 1}
+        
+        return ret_data
 
     def create_json_course_data(self, student_header, course_header):
         # Generates a JSON-like structure containing course data and conflicts
@@ -154,6 +182,11 @@ class Scheduler:
         # Sets the input data for the scheduler from a file
         if inputData is not None and inputData != "":
             self.in_csv = pd.read_excel(inputData)
+            course_codes_removed = self.remove_course_codes("COURSE_IDENTIFICATION")
+            fields_count = self.count_students_per_field("PIDM", "COURSE_IDENTIFICATION")
+            
+            print(course_codes_removed)
+            print(json.dumps(fields_count, indent=4))
         else:
             print("Invalid Data")
 
