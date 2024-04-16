@@ -9,6 +9,7 @@ from datetime import datetime
 
 class Scheduler:
     def __init__(self):
+
         # Input data placeholder for exam data, initially set to None
         self.in_csv = None
 
@@ -27,6 +28,12 @@ class Scheduler:
 
         # Number of exam slots available per day
         self.exams_per_day = 3
+
+        # Set the default number of exam days   
+        self.default_num_exam_days = 5  
+
+        # Holds a selected number from the UI 
+        self.selected_num_exam_days = None
 
         # Mapping slot indexes to human-readable time periods
         self.slot_names = {
@@ -189,6 +196,10 @@ class Scheduler:
             print(json.dumps(fields_count, indent=4))
         else:
             print("Invalid Data")
+
+    def set_number_of_exam_days(self, inputData):
+        
+        self.selected_num_exam_days = inputData
 
     def run(self):
         # Main execution method for scheduling

@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, Toplevel
+from tkinter import filedialog, messagebox, Toplevel, OptionMenu
 from PIL import Image, ImageTk
 import threading
 
@@ -13,6 +13,16 @@ class UI:
         self.scheduler = scheduler
         self.scheduler.set_ui(self)  # Link the UI to the scheduler for callbacks
 
+        # The default number of exam days from the Scheduler
+        self.num_exam_days = tk.IntVar(value=scheduler.default_num_exams)
+
+        # Dropdown menu for selecting the number of exam days
+        self.days_dropdown = tk.OptionMenu(
+            self.root, 
+            self.num_exam_days, 
+            *range(1, 11)  # Creates options from 1 to 10
+        )
+
         # UI window configuration
         self._title = "Deferred Exam Scheduler"
         self._width = 700  # Window width
@@ -22,7 +32,7 @@ class UI:
         self.root.title(self._title)
         self.root.geometry(f"{self._width}x{self._height}")
 
-        # Try to load and set the background image
+        # Background Image
         try:
             pil_image = Image.open("./branding/background.jpg")
             resized_image = pil_image.resize((self._width, self._height), Image.Resampling.LANCZOS)
@@ -33,10 +43,10 @@ class UI:
             print(f"Error loading the background image: {e}")
             self.root.configure(bg='gray')  # Fallback background color
 
-        # Upload button configuration and placement
+        # Upload button
         self.upload_button = tk.Button(self.root, text="Upload Schedule Data", command=self.upload_file)
         self.upload_button.configure(
-            font=('Helvetica', 12, 'bold'), 
+            font=('Arial', 12, 'bold'), 
             fg='black', 
             bg='#0078D7', 
             activebackground='#0053ba', 
@@ -48,10 +58,10 @@ class UI:
         )
         self.upload_button.place(x=self._width // 2 - 75, y=self._height // 2, anchor='center')
 
-        # Button to initiate the scheduling process
+        # Run scheduler button
         self.run_scheduler_button = tk.Button(self.root, text="Run Scheduler", command=self.run_scheduler)
         self.run_scheduler_button.configure(
-            font=('Helvetica', 12, 'bold'), 
+            font=('Arial', 12, 'bold'), 
             fg='black', 
             bg='#0078D7', 
             activebackground='#0053ba', 
@@ -63,15 +73,20 @@ class UI:
         )
         self.run_scheduler_button.place(x=self._width // 2 + 75, y=self._height // 2, anchor='center')
 
-        # Text widget for displaying progress and errors
+
+        # Dropdown Widget
+        self.days_dropdown.config(width=15, font=('Arial', 10))
+        self.days_dropdown.place(x=self._width // 2 - 75, y=self._height // 2 - 50, anchor='center')
+
+        # Message Widget
         self.progress_text = tk.Text(self.root, height=4, width=50)
         self.progress_text.place(x=350, y=300, anchor='center')
         self.progress_text.tag_configure('error', foreground='red')
 
-        # Settings button with a gear icon
+        # Settings button
         self.settings_button = tk.Button(self.root, text='⚙', command=self.open_settings)
         self.settings_button.configure(
-            font=('Helvetica', 14, 'bold'), 
+            font=('Arial', 14, 'bold'), 
             fg='black', 
             bg='gray', 
             bd=0, 
@@ -99,8 +114,12 @@ class UI:
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred: {e}")
 
+    def set_num_exams(self, selection):
+        self.scheduler.selected_num_exam_days = selection
+
     def run_scheduler(self):
         # Start the scheduler in a separate thread to prevent UI freezing
+        self.scheduler.exams_per_day = self.num_exam_days.get()
         self.update_progress("Starting scheduling process...")
         threading.Thread(target=self.scheduler.run).start()
 
