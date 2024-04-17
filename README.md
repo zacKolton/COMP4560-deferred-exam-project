@@ -1,34 +1,36 @@
 # COMP4560-Deferred Exam Scheduler
 
-## Introduction
-The Deferred Exam Scheduler is an application designed to streamline the process of scheduling deferred exams for professors and educational administrators. By allowing the upload of student information, the application automates the creation of a schedule for all deferred exams, efficiently managing time slots and resources.
+## Project Overview
+The Deferred Exam Scheduler is a GUI application designed to automate the process of scheduling deferred exams. It ensures that no student is scheduled to take two exams at the same time, thus eliminating conflicts. This is achieved by employing a graph coloring algorithm to assign time slots to exams while managing conflicts.
+
+## Installation
+Before you can run the application, ensure you have the following prerequisites installed:
+- Python 3
+- Tkinter (usually comes with Python)
+- PIL (Python Imaging Library)
+- pandas
+- numpy
+
+To install the necessary Python packages, run: ``pip install -r requirements.txt``
+
+## How to Use
+1. Launch the application by running `main.py`.
+2. Use the "Upload Schedule Data" button to select and upload the Excel file containing the exam data.
+3. Click "Run Scheduler" to process the uploaded data and generate the schedule.
+4. Access the schedule in the specified download location, which will be indicated in the application upon completion.
+
 
 ## Features
-- **Automated Scheduling:** Automatically generate exam schedules based on student information.
-- **Excel Upload:** Professors can upload student data through an Excel file, making it easy to integrate with existing records.
-- **Conflict Resolution:** The app identifies and resolves scheduling conflicts to ensure no student is double-booked.
-- **Customizable Settings:** Users can set preferences for exam times, durations, and locations.
-- **Export Functionality:** Export the finalized exam schedule back to Excel or PDF for easy distribution and printing.
+- Upload exam data through a user-friendly graphical interface.
+- Automatic conflict resolution between different exams based on shared students.
+- Efficient scheduling using a greedy graph coloring algorithm.
+- Output the final exam schedule in an Excel file.
 
-## Getting Started
 
-### Prerequisites
-- Python 3.x
-- Tkinter (usually comes with Python)
-- Pandas library for handling Excel files
-- Openpyxl library for .xlsx file support
-
-### Installation
-1. Clone the repository to your local machine: git clone https://github.com/zacKolton/COMP4560-deferred-exam-project.git
-2. Navigate to the cloned directory: cd Deferred-Exam-Scheduler3.
-3. Install the required Python packages: pip install pandas openpyxl
-
-### Running the Application
-To start the application, run: python main.py
-
-Follow the on-screen instructions to upload student data and generate the exam schedule.
-
-## Usage
-1. **Uploading Data:** Click the "Upload Excel File" button and select your Excel file containing the student information.
-2. **Generating Schedule:** The app will process the uploaded file and automatically generate a deferred exam schedule.
-3. **Exporting Schedule:** Save the generated schedule by clicking the "Export" button and choosing your preferred format.
+## Directory Structure
+- `main.py`: The entry point of the application.
+- `scheduler/`: Contains the `Scheduler` class that handles scheduling logic.
+- `user_interface/`: Contains the `UI` class that handles the graphical user interface.
+- `branding/`: Contains the branding assets like background images and logos.
+- `requirements.txt`: Lists all the Python dependencies for the project.
+- `LICENSE`: The license file.
