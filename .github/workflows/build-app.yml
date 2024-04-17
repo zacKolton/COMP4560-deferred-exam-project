@@ -11,17 +11,24 @@ permissions:
   actions: write
 
 jobs:
-  build-and-release:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            executable: main.exe
+          - os: macos-latest
+            executable: main
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-    - name: Set up Python 3.10
+    - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: '3.10'
 
     - name: Install dependencies
       run: |
@@ -30,36 +37,55 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Lint with flake8
-      run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
     #- name: Test with pytest
-    #  run: pytest
+     # run: pytest
 
     - name: Build Executable
       run: pyinstaller --onefile --windowed main.py
+      shell: bash
+
+    - name: Rename Executable (macOS)
+      if: matrix.os == 'macos-latest'
+      run: mv dist/main dist/main
+      shell: bash
 
     - name: List output files
       run: ls -l ./dist
+      shell: bash
 
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: release-${{ github.sha }}
+        tag_name: release-${{ github.run_number }}
         release_name: Release ${{ github.run_number }}
         draft: false
         prerelease: false
 
-    - name: Upload Release Asset
+    - name: Upload Windows Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./dist/main.exe
-        asset_name: main.exe
+        asset_name: main-windows.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload macOS Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/main
+        asset_name: main-macos
         asset_content_type: application/octet-stream
