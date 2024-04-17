@@ -99,10 +99,11 @@ class UI:
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred: {e}")
 
+    # TODO - Change this function to accept input
     def run_scheduler(self):
         # Start the scheduler in a separate thread to prevent UI freezing
         self.update_progress("Starting scheduling process...")
-        threading.Thread(target=self.scheduler.run).start()
+        threading.Thread(target=self.scheduler.run, args=[5]).start()
 
     def open_settings(self):
         # Open a new window for settings or about info
