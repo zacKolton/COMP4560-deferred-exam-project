@@ -190,7 +190,7 @@ class Scheduler:
         else:
             print("Invalid Data")
 
-    def run(self):
+    def run(self, constraint):
         # Main execution method for scheduling
         self.ui.update_progress("Extracting/processing data...\n(This may take a while)")
         if self.in_csv is not None:
