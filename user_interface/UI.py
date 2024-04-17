@@ -14,7 +14,7 @@ class UI:
         self.scheduler.set_ui(self)  # Link the UI to the scheduler for callbacks
 
         # The default number of exam days from the Scheduler
-        self.num_exam_days = tk.IntVar(value=scheduler.default_num_exams)
+        self.num_exam_days = tk.IntVar(value=scheduler.default_num_exam_days)
 
         # Dropdown menu for selecting the number of exam days
         self.days_dropdown = tk.OptionMenu(
