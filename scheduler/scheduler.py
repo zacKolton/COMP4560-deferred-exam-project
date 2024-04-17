@@ -198,7 +198,6 @@ class Scheduler:
             print("Invalid Data")
 
     def set_number_of_exam_days(self, inputData):
-        
         self.selected_num_exam_days = inputData
 
     def run(self):

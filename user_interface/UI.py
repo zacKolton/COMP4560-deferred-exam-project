@@ -13,16 +13,6 @@ class UI:
         self.scheduler = scheduler
         self.scheduler.set_ui(self)  # Link the UI to the scheduler for callbacks
 
-        # The default number of exam days from the Scheduler
-        self.num_exam_days = tk.IntVar(value=scheduler.default_num_exam_days)
-
-        # Dropdown menu for selecting the number of exam days
-        self.days_dropdown = tk.OptionMenu(
-            self.root, 
-            self.num_exam_days, 
-            *range(1, 11)  # Creates options from 1 to 10
-        )
-
         # UI window configuration
         self._title = "Deferred Exam Scheduler"
         self._width = 700  # Window width
@@ -43,7 +33,7 @@ class UI:
             print(f"Error loading the background image: {e}")
             self.root.configure(bg='gray')  # Fallback background color
 
-        # Upload button
+        # BUTTON: Upload
         self.upload_button = tk.Button(self.root, text="Upload Schedule Data", command=self.upload_file)
         self.upload_button.configure(
             font=('Arial', 12, 'bold'), 
@@ -58,7 +48,7 @@ class UI:
         )
         self.upload_button.place(x=self._width // 2 - 75, y=self._height // 2, anchor='center')
 
-        # Run scheduler button
+        # BUTTON: Run Scheduler
         self.run_scheduler_button = tk.Button(self.root, text="Run Scheduler", command=self.run_scheduler)
         self.run_scheduler_button.configure(
             font=('Arial', 12, 'bold'), 
@@ -73,8 +63,18 @@ class UI:
         )
         self.run_scheduler_button.place(x=self._width // 2 + 75, y=self._height // 2, anchor='center')
 
-
         # Dropdown Widget
+        # The default number of exam days from the Scheduler
+        self.num_exam_days = tk.IntVar(value=scheduler.default_num_exam_days)
+
+        # Dropdown menu for selecting the number of exam days
+        self.days_dropdown = tk.OptionMenu(
+            self.root, 
+            self.num_exam_days, 
+            *range(1, 11)  # Creates options from 1 to 10
+        )
+
+        self.days_dropdown.pack()
         self.days_dropdown.config(width=15, font=('Arial', 10))
         self.days_dropdown.place(x=self._width // 2 - 75, y=self._height // 2 - 50, anchor='center')
 
