@@ -8,7 +8,7 @@ charset-normalizer==2.0.11
 cycler==0.11.0
 deprecation==2.1.0
 et-xmlfile==1.1.0
-fonttools==4.33.3
+fonttools==4.43.0
 idna==3.3
 joblib==1.1.0
 keras==2.8.0
