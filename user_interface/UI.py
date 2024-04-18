@@ -36,7 +36,7 @@ class UI:
         # Upload button configuration and placement
         self.upload_button = tk.Button(self.root, text="Upload Schedule Data", command=self.upload_file)
         self.upload_button.configure(
-            font=('Helvetica', 12, 'bold'), 
+            font=('Arial', 12, 'bold'), 
             fg='black', 
             bg='#0078D7', 
             activebackground='#0053ba', 
@@ -51,7 +51,7 @@ class UI:
         # Button to initiate the scheduling process
         self.run_scheduler_button = tk.Button(self.root, text="Run Scheduler", command=self.run_scheduler)
         self.run_scheduler_button.configure(
-            font=('Helvetica', 12, 'bold'), 
+            font=('Arial', 12, 'bold'), 
             fg='black', 
             bg='#0078D7', 
             activebackground='#0053ba', 
@@ -71,7 +71,7 @@ class UI:
         # Settings button with a gear icon
         self.settings_button = tk.Button(self.root, text='⚙', command=self.open_settings)
         self.settings_button.configure(
-            font=('Helvetica', 14, 'bold'), 
+            font=('Arial', 14, 'bold'), 
             fg='black', 
             bg='gray', 
             bd=0, 
@@ -121,7 +121,7 @@ class UI:
         about_window.title("About")
         about_window.geometry("300x200")
         about_text = "Upload your excel containing list of students and their courses and be able to download the deferred exam schedule for this term."
-        tk.Label(about_window, text="About This App", font=('Helvetica', 12, 'bold')).pack(pady=10)
+        tk.Label(about_window, text="About This App", font=('Arial', 12, 'bold')).pack(pady=10)
         tk.Label(about_window, text=about_text, wraplength=250).pack(pady=10)
 
     def get_title(self):
