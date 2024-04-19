@@ -5,6 +5,8 @@ import pandas as pd
 import numpy as np
 import math
 import os
+import random
+import heapq
 from datetime import datetime
 
 class Scheduler:
@@ -44,6 +46,13 @@ class Scheduler:
         time_slot = f"Day: {day}, {period_name}"
         return time_slot
     
+    def index_to_timeslot_2(self, slotIndex,examsPerDay, slotNames):
+        day = math.floor(slotIndex/examsPerDay)
+        timePeriod = slotIndex%examsPerDay
+        periodName = slotNames[timePeriod]
+        timeSlot = f"Day: {day}, {periodName}"
+        return timeSlot
+    
     def set_ui(self, ui):
         # Assigns a UI object to the scheduler for updating progress
         self.ui = ui
@@ -73,31 +82,48 @@ class Scheduler:
                 ret_data[field] = {"student_count": 1}
         
         return ret_data
+    
+    def create_json_course_data(self, df, studentHeader, courseHeader):
+        retData = {}
+        courses = df[courseHeader].unique()
 
-    def create_json_course_data(self, student_header, course_header):
-        # Generates a JSON-like structure containing course data and conflicts
-        ret_data = {}
+        for course in courses:
+            # Num students in course
+            studentsInCourse = df[df[courseHeader] == course][studentHeader].unique()
+            
+            if len(course) == 8:
+                subj = course[:4].upper()
+                if subj == "MBIO":
+                    subj = "BIOL"
+                retData[course] = {
+                    "students": len(studentsInCourse),
+                    "conflicts": [],
+                    "conflictsDict": {},
+                    "year": int(course[4]),
+                    "subject": subj,
+                    "subjectYear": course[:5].upper()
+                }
+            elif len(course) == 7:
+                retData[course] = {
+                    "students": len(studentsInCourse),
+                    "conflicts": [],
+                    "conflictsDict": {},
+                    "year": int(course[3]),
+                    "subject": course[:3].upper(),
+                    "subjectYear": course[:4].upper()
+                }
+            else:
+                print("it's time to contact the developers again")
+            for conflict in courses:
+                if course != conflict: 
+                    studentsInOtherCourse = df[df[courseHeader] == conflict][studentHeader].unique()
+                    studentsInConflicts = set(studentsInOtherCourse) & set(studentsInCourse)
+                    if (studentsInConflicts):
+                        retData[course]['conflicts'].append(conflict)
+                        retData[course]['conflictsDict'][conflict] = len(studentsInConflicts)
 
-        # Loop through each unique course in the dataset
-        for course in self.in_csv[course_header].unique():
-            students_in_course = self.in_csv[self.in_csv[course_header] == course][student_header].unique()
-
-            # Store student count and initialize conflicts list for each course
-            ret_data[course] = {
-                "students": len(students_in_course),
-                "conflicts": [],
-            }
-
-            # Identify conflicts for each student in the course
-            for student in students_in_course:
-                conflicts = self.in_csv[(self.in_csv[student_header] == student) &
-                                        (self.in_csv[course_header] != course)][course_header].unique()
-                ret_data[course]['conflicts'].extend(conflicts)
-
-            # Count the total number of conflicts for the course
-            ret_data[course]['num_conflicts'] = len(ret_data[course]['conflicts'])
-
-        return ret_data
+            retData[course]['numConflicts'] = len(retData[course]['conflictsDict'])
+        return retData
 
     def dict_to_df_no_rooms(self, schedule_dict, course_dict):
         # Converts the scheduling dictionary to a DataFrame excluding room assignments
@@ -185,29 +211,128 @@ class Scheduler:
             course_codes_removed = self.remove_course_codes("COURSE_IDENTIFICATION")
             fields_count = self.count_students_per_field("PIDM", "COURSE_IDENTIFICATION")
             
-            print(course_codes_removed)
-            print(json.dumps(fields_count, indent=4))
+            # print(course_codes_removed)
+            # print(json.dumps(fields_count, indent=4))
         else:
             print("Invalid Data")
 
+    def box_score(self, inCourse, selectedBox, coursesJSON):
+        if inCourse not in selectedBox['conflicts']:
+            # highest score 
+            return 1000
+        else:
+            score = 0
+            for course in selectedBox['scheduled']:
+                if inCourse in coursesJSON[course]['conflicts']:
+                    courseScore = -10
+                    if coursesJSON[inCourse]['subjectYear'] == coursesJSON[course]['subjectYear']:
+                        courseScore = courseScore - math.pow(20 - coursesJSON[inCourse]['year'], 1)
+                    else:
+                        courseScore = courseScore - math.pow(20 - coursesJSON[inCourse]['year'] - coursesJSON[course]['year'], 1)/2
+                        if coursesJSON[inCourse]['subject'] == coursesJSON[course]['subject']:
+                            courseScore = courseScore - 5
+                    courseScore = courseScore*coursesJSON[inCourse]['conflictsDict'][course]
+                    score += courseScore
+            return score
+        
+    def find_random_max_box(self, boxScores):
+        maxScore = max(boxScores.values())
+        maxBoxes = [box for box, score in boxScores.items() if score == maxScore]
+        return random.choice(maxBoxes)
+
+    def add_conflicts_in_box(self, courses, box):
+        for course in box['scheduled']:
+            conflicts = list(set(courses[course]['conflicts']) & set(box['scheduled']))
+            if len(conflicts):
+                box['conflictsInSchedule'][course] = conflicts
+                box['numConflicts'] += len(conflicts)
+
+    def fill_boxes(self, courses, numBoxes):
+        schedule1 = {f'{self.index_to_timeslot_2(i, 3, self.slot_names)}': {'scheduled': [], 'conflicts': [], 'conflictsInSchedule': {}, 'numConflicts': 0} for i in range(numBoxes)}
+
+        for course_id, course_info in courses.items():
+            boxScores = {box_id: self.box_score(course_id, box, courses) for box_id, box in schedule1.items()}
+            targetBoxID = self.find_random_max_box(boxScores)
+
+            schedule1[targetBoxID]['scheduled'].append(course_id)
+            schedule1[targetBoxID]['conflicts'] = list(set(schedule1[targetBoxID]['conflicts']) | set(course_info['conflicts']))        
+            
+        for _, box in schedule1.items():
+            self.add_conflicts_in_box(courses, box)
+            del box['conflicts']
+
+        return schedule1
+    
+    def sum_conflicts(self, boxes):
+        totalConflicts = 0
+        for box in boxes.values():
+            totalConflicts += box['numConflicts']
+        return totalConflicts
+    
+    def find_best_boxes(self, courseDict, numBoxes, runs=2000):
+        minHeap = []
+
+        for i in range(runs):
+            boxes = self.fill_boxes(courseDict, numBoxes)
+            totalConflicts = self.sum_conflicts(boxes)
+            
+            if len(minHeap) < 3:
+                heapq.heappush(minHeap, (-totalConflicts, i, boxes)) 
+            else:
+                heapq.heappushpop(minHeap, (-totalConflicts, i, boxes))  
+
+        return [heapq.heappop(minHeap)[2] for _ in range(len(minHeap))][::-1]
+    
+    def dict_to_df(self, scheduleDict, coursesJSON):
+        listCourses = [(key, value['scheduled']) for key,value in scheduleDict.items()]
+        retDf = pd.DataFrame(listCourses, columns=["Time Slot", "Courses"])
+        retDf = retDf.explode("Courses").reset_index(drop=True)
+
+        conflictsDict = {}
+        for box in scheduleDict.values():
+            if box['conflictsInSchedule']:
+                for course, conflicts in box['conflictsInSchedule'].items():
+                    courseConflicts = {}
+                    for conflict in conflicts: 
+                        if coursesJSON[course]['conflictsDict'][conflict]:
+                            courseConflicts[conflict] = coursesJSON[course]['conflictsDict'][conflict]
+                    conflictsDict[course] = courseConflicts
+
+        retDf['Conflict Details'] = retDf['Courses'].map(lambda x: conflictsDict.get(x, {}))
+        
+        return retDf
+        
     def run(self, constraint):
+        constraint = constraint*3
         # Main execution method for scheduling
         self.ui.update_progress("Extracting/processing data...\n(This may take a while)")
         if self.in_csv is not None:
             if "PIDM" in self.in_csv.columns and "COURSE_IDENTIFICATION" in self.in_csv.columns:
                 current_timestamp = int(time.time())
-                courses_json = self.create_json_course_data("PIDM", "COURSE_IDENTIFICATION")
+                courses_json = self.create_json_course_data(self.in_csv, "PIDM", "COURSE_IDENTIFICATION")
                 sorted_courses = dict(sorted(courses_json.items(), key=lambda item: item[1]['students'], reverse=True))
 
                 self.ui.update_progress("Analyzing/scheduling...")
-                gc_schedule = self.graph_coloring_schedule(sorted_courses)
+                if (constraint > 0):
+                    output = self.find_best_boxes(sorted_courses, constraint)
+                    
+                    downloads_path = os.path.join(os.path.expanduser('~'), 'Downloads')
+                    i = 0
 
-                gc_dict = self.dict_to_df_no_rooms(gc_schedule, courses_json)
+                    for schedule in output:
+                        df = self.dict_to_df(schedule, sorted_courses)
+                        output_file = os.path.join(downloads_path, f"Schedule_Days_{constraint}_{i}_{current_timestamp}.xlsx")
+                        df.to_excel(output_file, index=False, sheet_name='Schedule')
+                        i +=1
+                else:
+                    gc_schedule = self.graph_coloring_schedule(sorted_courses)
 
-                downloads_path = os.path.join(os.path.expanduser('~'), 'Downloads')
-                output_file = os.path.join(downloads_path, f"Deferred_Exam_Schedule_{current_timestamp}.xlsx")
+                    gc_dict = self.dict_to_df_no_rooms(gc_schedule, courses_json)                
 
-                gc_dict.to_excel(output_file, index=False, sheet_name='Schedule')
+                    downloads_path = os.path.join(os.path.expanduser('~'), 'Downloads')
+                    output_file = os.path.join(downloads_path, f"Deferred_Exam_Schedule_{current_timestamp}.xlsx")
+
+                    gc_dict.to_excel(output_file, index=False, sheet_name='Schedule')
                 self.ui.update_progress(f"Done! Downloaded at: {output_file}")
                 print(f"Schedule saved to {output_file}")
             else:
