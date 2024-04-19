@@ -321,7 +321,7 @@ class Scheduler:
 
                     for schedule in output:
                         df = self.dict_to_df(schedule, sorted_courses)
-                        output_file = os.path.join(downloads_path, f"Schedule_Days_{constraint}_{i}_{current_timestamp}.xlsx")
+                        output_file = os.path.join(downloads_path, f"Deferred_Exam_Schedule_{constraint/3}_V{i}_{current_timestamp}.xlsx")
                         df.to_excel(output_file, index=False, sheet_name='Schedule')
                         i +=1
                 else:
